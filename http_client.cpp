@@ -8,7 +8,7 @@
 // #include <istream>
 // #include <sstream>
 #include <netinet/in.h>
-#include <sstream>
+// #include <sstream>
 #include <string>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -435,12 +435,16 @@ int main(int argc, char *argv[])
         }
 
         // look if server responds
-        stringstream __ss;
         char __char = '\0';
         while(read(__socket, &__char, 1) > 0)
         {
+            if (__char == '\0')
+            {
+                break;
+            }
             cout << __char;
         }
+        cout.flush();
     }
 
     close(__socket);

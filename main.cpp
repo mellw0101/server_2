@@ -10,6 +10,7 @@
 #include <exception>
 #include <iostream>
 // #include <sstream>
+// #include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -394,6 +395,46 @@ int __setup__socket__(struct sockaddr_in *__address)
     return __socket;
 }
 
+vector<string> combineArgsBetweenQuotes(const vector<string>& input)
+{
+    vector<string> result;
+    bool insideQuotes = false;
+    std::string combinedArg;
+
+    for (const std::string &arg : input)
+    {
+        if (arg.front() == '"' && arg.back() == '"')
+        {
+            result.push_back(arg.substr(1, arg.size() - 2));
+        }
+        else if (arg.front() == '"' && !insideQuotes)
+        {
+            // Start of a quoted argument
+            insideQuotes = true;
+            combinedArg = arg.substr(1);
+        }
+        else if (arg.back() == '"' && insideQuotes)
+        {
+            // End of a quoted argument
+            combinedArg += " " + arg.substr(0, arg.size() - 1);
+            result.push_back(combinedArg);
+            insideQuotes = false;
+        }
+        else if (insideQuotes)
+        {
+            // Inside a quoted argument, concatenate it
+            combinedArg += " " + arg;
+        }
+        else
+        {
+            // Not inside quotes, add as is
+            result.push_back(arg);
+        }
+    }
+
+    return result;
+}
+
 int main()
 {
     try
@@ -409,7 +450,6 @@ int main()
     int32_t __sock[2];
     uint32_t __opt_code(1);
 
-    
     // Setup server.
     struct sockaddr_in __address;
     socklen_t __address_len(sizeof(__address));
@@ -436,7 +476,7 @@ int main()
                 break;
             }
         }
-        vector<string> __str_vec;    
+        vector<string> __str_vec;
         string __data(__ss.str());
         int start(0);
 
@@ -455,6 +495,8 @@ int main()
                 __str_vec.push_back(__sub_str);
             }
         }
+
+        __str_vec = combineArgsBetweenQuotes(__str_vec);
 
         // look for commands.
         for(unsigned long i = 0; i < __str_vec.size(); ++i)
@@ -476,7 +518,7 @@ int main()
             }
             else if(__str_vec[i] == "server_time")
             {
-                string __msg__("Current server time -> " + __time__());
+                string __msg__("Current server time -> " + __time__() + "\n");
                 if(send(__sock[1], __msg__.c_str(), __msg__.length(), 0) < 0)
                 {
                     perror(string(__time__() + "send: ").c_str());
@@ -506,7 +548,7 @@ int main()
                     execvp(__str_vec[i + 1].c_str(), argv.data());
                     
                     // If execl returns, it means it failed
-                    perror("execl");
+                    perror("execvp");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -547,24 +589,20 @@ int main()
             }
             else if(__str_vec[i] == "ls")
             {
-                pid_t pid = fork();
-                if(pid == 0)
+                string __dir;
+                if(i == __str_vec.size() - 1)
                 {
-                    string __dir;
-                    if(i == __str_vec.size() - 1)
-                    {
-                        __dir = fs::current_path().string();
-                    }
-                    else
-                    {
-                        __dir = __str_vec[i + 1];
-                    }
+                    __dir = fs::current_path().string();
+                }
+                else
+                {
+                    __dir = __str_vec[i + 1];
+                }
 
-                    string __output__ = c_ls(__dir);
-                    if(send(__sock[1], __output__.c_str(), __output__.length(), 0) < 0)
-                    {
-                        perror(string(__time__() + "send: ").c_str());
-                    }
+                string __output__ = c_ls(__dir);
+                if(send(__sock[1], __output__.c_str(), __output__.length(), 0) < 0)
+                {
+                    perror(string(__time__() + "send: ").c_str());
                 }
             }
             else if(__str_vec[i] == "pipe")
@@ -587,8 +625,8 @@ int main()
                     perror("fork");
                     exit(EXIT_FAILURE);
                 }
-                else if(childPid == 0)
-                { // Child process.
+                else if(childPid == 0) // Child process.
+                {
                     close(pipefd[0]);
                     dup2(pipefd[1], STDOUT_FILENO);
                     dup2(pipefd[1], STDERR_FILENO);
@@ -601,8 +639,8 @@ int main()
                     perror("execlp");
                     exit(EXIT_FAILURE);
                 }
-                else
-                { // Parent process.
+                else // Parent process.
+                {
                     // close(pipefd[0]);                               // Close the read end of the pipe, as it's not needed in the parent
                     constexpr size_t bufferSize = 4096;             // Create a buffer to read the command's output
                     char buffer[bufferSize];
@@ -616,10 +654,28 @@ int main()
                     close(pipefd[1]);                               // Close the write end of the pipe
                 }
             }
+            else if (__str_vec[i] == "cd")
+            {
+                try
+                {
+                    if (i == (__str_vec.size() - 1))
+                    {
+                        fs::current_path(string(getenv("HOME")) + "/.server" );
+                    }
+                    else
+                    {
+                        fs::current_path(__str_vec[i + 1].c_str());
+                    }
+                }
+                catch(exception &__e)
+                {
+                    cout << __e.what() << "\n";
+                }
+            }
         }
 
-        console->out(__time__(), __data, '\n');
         close(__sock[1]);
+        console->out(__time__(), __data, '\n');
     }
 
     return 0;
