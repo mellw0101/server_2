@@ -216,6 +216,49 @@ const char *__get_local_ip__()
     return inet_ntop(AF_INET, &__response.sin_addr, __buffer, INET_ADDRSTRLEN);
 }
 
+std::string getLocalIPAddress() {
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0); // Use UDP socket
+    if (sockfd == -1) {
+        std::cerr << "Could not create socket" << std::endl;
+        return "";
+    }
+
+    struct sockaddr_in serv{};
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = AF_INET;
+    serv.sin_addr.s_addr = inet_addr("8.8.8.8"); // Google's public DNS server
+    serv.sin_port = htons(80);
+
+    // Connect to the server
+    int err = connect(sockfd, (const struct sockaddr*)&serv, sizeof(serv));
+    if (err == -1) {
+        std::cerr << "Could not connect to server" << std::endl;
+        close(sockfd);
+        return "";
+    }
+
+    struct sockaddr_in name{};
+    socklen_t namelen = sizeof(name);
+    err = getsockname(sockfd, (struct sockaddr*)&name, &namelen);
+    if (err == -1) {
+        std::cerr << "Could not get socket name" << std::endl;
+        close(sockfd);
+        return "";
+    }
+
+    char buffer[INET_ADDRSTRLEN];
+    const char* p = inet_ntop(AF_INET, &name.sin_addr, buffer, sizeof(buffer));
+    if (p == nullptr) {
+        std::cerr << "Could not convert address to string" << std::endl;
+        close(sockfd);
+        return "";
+    }
+
+    std::string localIP(p);
+    close(sockfd);
+    return localIP;
+}
+
 char** vectorToArgv(const std::vector<std::string>& vec)
 {
     char** argv = new char*[vec.size() + 1];  // Allocate memory for argv array. +1 for the nullptr terminator.
@@ -325,7 +368,7 @@ int __setup__socket__(struct sockaddr_in *__address)
     __address->sin_port = htons(8001);
 
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if((__address->sin_addr.s_addr = inet_addr(__get_local_ip__())) <= 0)
+    if((__address->sin_addr.s_addr = inet_addr(getLocalIPAddress().c_str())) <= 0)
     {
         perror(string("inet_addr: ").c_str());
         close(__socket);
