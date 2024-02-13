@@ -63,17 +63,10 @@ class SimpleReadline
         {
             string line;
             char c;
-            string red("\e[31m");
-            string bold_green("\e[1m\e[32m");
-            string reset("\e[0m");
-            string bold_white("\e[1m\e[37m");
-            string __dir(__pwd);
-            string USER = getenv("USER");
-            string shell_no_color("@()$ ");
-            string shell(red + USER + reset + "@(" + bold_green + __dir + reset + ")$ ");
+            string shell("server-$ ");
             string prompt(shell);
 
-            int length(shell_no_color.size() + USER.size() + __dir.size() + 1);
+            int length(prompt.length() + 1);
             int cursorPos(0);
             int historyIndex(history.size());
             cout << prompt;
@@ -389,9 +382,6 @@ int main()
     // const char *__prompt(" --> : ");
     string __msg_str__("");
     SimpleReadline srl;
-    
-    __assign_and_init__(&__socket, &__server, __port, __server_ip_address);
-    string __prompt = __send_request__(__socket, "_DIR:");
 
     while(true)
     {
@@ -420,7 +410,7 @@ int main()
                 exit(EXIT_FAILURE);
             }
             
-        __msg_str__ = srl.readLine(__prompt);
+        __msg_str__ = srl.readLine("");
         __msg_str__ += '\0';
 
         if(send(__socket, __msg_str__.c_str(), __msg_str__.length(), 0) < 0)
@@ -431,15 +421,12 @@ int main()
         }
 
         // look if server responds
-
-            stringstream __ss;
-            char __char = '\0';
-            while(read(__socket, &__char, 1) > 0)
-            {
-                cout << __char;
-            }
-            cout << "\n";
-            // cout << (__ss.str()) << "\n";
+        stringstream __ss;
+        char __char = '\0';
+        while(read(__socket, &__char, 1) > 0)
+        {
+            cout << __char;
+        }
     }
 
     close(__socket);

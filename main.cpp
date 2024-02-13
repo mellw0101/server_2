@@ -19,7 +19,7 @@
 // #include <type_traits>
 #include <thread>
 #include <unistd.h>
-#include <microhttpd.h>
+// #include <microhttpd.h>
 #include <ctime>
 #include <unistd.h> // For close()
 #include <stdlib.h> // For exit()
@@ -364,18 +364,17 @@ int main()
     
     const char *__ip_address(__get_local_ip__());
     int32_t __sock[2];
-    char __buffer[10000] = {0};
     uint32_t __opt_code(1);
 
-    // Setup server.
     
-        struct sockaddr_in __address;
-        socklen_t __address_len(sizeof(__address));
-        memset(&__address, 0, __address_len);
-        __sock[0] = __setup__socket__(__ip_address, &__address);
-        
-        console->out('\n', __time__(), " - \033[92mSuccessfully Created Socket\033[0m.\n");
-        console->out(__time__(), " - \033[92mServer is listening on: \033[0m", inet_ntoa(__address.sin_addr), ":\033[94m", PORT, "\033[0m\n");
+    // Setup server.
+    struct sockaddr_in __address;
+    socklen_t __address_len(sizeof(__address));
+    memset(&__address, 0, __address_len);
+    __sock[0] = __setup__socket__(__ip_address, &__address);
+    
+    console->out('\n', __time__(), " - \033[92mSuccessfully Created Socket\033[0m.\n");
+    console->out(__time__(), " - \033[92mServer is listening on: \033[0m", inet_ntoa(__address.sin_addr), ":\033[94m", PORT, "\033[0m\n");
 
     while(true)
     {
@@ -384,14 +383,18 @@ int main()
             _fatal_error("Accept failed.");
         }
 
-        int32_t valread = read(__sock[1], __buffer, sizeof(__buffer));
-        if(valread < 0)
+        stringstream __ss;
+        char __char = '\0';
+        while(read(__sock[1], &__char, 1) > 0)
         {
-            perror(string(__time__() + "read: ").c_str());
+            __ss << __char;
+            if(__char == '\0')
+            {
+                break;
+            }
         }
-        
         vector<string> __str_vec;    
-        string __data(__buffer);
+        string __data(__ss.str());
         int start(0);
 
         for(uint16_t i = 0; i < __data.length(); ++i)
@@ -405,7 +408,7 @@ int main()
 
             if(i == __data.length() - 1)
             {
-                string __sub_str(__data.substr(start, i - start + 1));
+                string __sub_str(__data.substr(start, i - start));
                 __str_vec.push_back(__sub_str);
             }
         }
@@ -421,16 +424,14 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-
-            if(__str_vec[i] == "SIGTERM")
+            else if(__str_vec[i] == "SIGTERM")
             {
                 console->out("Recived: 'SIGTERM', shuting down now.\n");
                 close(__sock[1]);
                 close(__sock[0]);
                 exit(EXIT_SUCCESS);
             }
-
-            if(__str_vec[i] == "server_time")
+            else if(__str_vec[i] == "server_time")
             {
                 string __msg__("Current server time -> " + __time__());
                 if(send(__sock[1], __msg__.c_str(), __msg__.length(), 0) < 0)
@@ -438,8 +439,7 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-
-            if(__str_vec[i] == "run")
+            else if(__str_vec[i] == "run")
             {
                 std::vector<char*> argv;
                 for(int h = i + 1; h < __str_vec.size(); ++h)
@@ -467,8 +467,7 @@ int main()
                     exit(EXIT_FAILURE);
                 }
             }
-
-            if(__str_vec[i] == "run_backround")
+            else if(__str_vec[i] == "run_backround")
             {
                 string __args__;
                 for(int u = (i + 1); u < __str_vec.size(); ++u)
@@ -503,21 +502,29 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-
-            if(__str_vec[i] == "c_ls")
+            else if(__str_vec[i] == "ls")
             {
                 pid_t pid = fork();
                 if(pid == 0)
                 {
-                    string __output__ = c_ls(__str_vec[i + 1]);
+                    string __dir;
+                    if(i == __str_vec.size() - 1)
+                    {
+                        __dir = fs::current_path().string();
+                    }
+                    else
+                    {
+                        __dir = __str_vec[i + 1];
+                    }
+
+                    string __output__ = c_ls(__dir);
                     if(send(__sock[1], __output__.c_str(), __output__.length(), 0) < 0)
                     {
                         perror(string(__time__() + "send: ").c_str());
                     }
                 }
             }
-
-            if(__str_vec[i] == "pipe")
+            else if(__str_vec[i] == "pipe")
             {
                 string __args__;
                 for(int u = (i + 1); u < __str_vec.size(); ++u)
@@ -572,7 +579,6 @@ int main()
             }
         }
 
-        __buffer[valread] = '\0'; /* Ensure null-termination -->> (buffer[LAST ELEMENT] = '\0') */
         console->out(__time__(), __data, '\n');
         close(__sock[1]);
     }
