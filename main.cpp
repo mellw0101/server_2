@@ -46,8 +46,8 @@
 
 
 #define PORT 8001
-using namespace std;
 namespace fs = std::filesystem;
+using namespace std;
 
 namespace
 {
@@ -304,7 +304,7 @@ void __check_config__()
     }
 }
 
-int __setup__socket__(const char *__ip_address, struct sockaddr_in *__address)
+int __setup__socket__(struct sockaddr_in *__address)
 {
     int __socket;
     uint __opt_code(1);
@@ -362,7 +362,7 @@ int main()
         cerr << e.what();
     }
     
-    const char *__ip_address(__get_local_ip__());
+    // const char *__ip_address = __get_local_ip__();
     int32_t __sock[2];
     uint32_t __opt_code(1);
 
@@ -371,7 +371,7 @@ int main()
     struct sockaddr_in __address;
     socklen_t __address_len(sizeof(__address));
     memset(&__address, 0, __address_len);
-    __sock[0] = __setup__socket__(__ip_address, &__address);
+    __sock[0] = __setup__socket__(&__address);
     
     console->out('\n', __time__(), " - \033[92mSuccessfully Created Socket\033[0m.\n");
     console->out(__time__(), " - \033[92mServer is listening on: \033[0m", inet_ntoa(__address.sin_addr), ":\033[94m", PORT, "\033[0m\n");
@@ -397,7 +397,7 @@ int main()
         string __data(__ss.str());
         int start(0);
 
-        for(uint16_t i = 0; i < __data.length(); ++i)
+        for(unsigned long i = 0; i < __data.length(); ++i)
         {
             if(__data[i] == ' ')
             {
@@ -414,7 +414,7 @@ int main()
         }
 
         // look for commands.
-        for(uint16_t i = 0; i < __str_vec.size(); ++i)
+        for(unsigned long i = 0; i < __str_vec.size(); ++i)
         {
             if(__str_vec[i] == "_DIR:")
             {
@@ -442,7 +442,7 @@ int main()
             else if(__str_vec[i] == "run")
             {
                 std::vector<char*> argv;
-                for(int h = i + 1; h < __str_vec.size(); ++h)
+                for(unsigned long h = i + 1; h < __str_vec.size(); ++h)
                 {
                     argv.push_back(const_cast<char*>(__str_vec[h].c_str()));
                 }
@@ -470,7 +470,7 @@ int main()
             else if(__str_vec[i] == "run_backround")
             {
                 string __args__;
-                for(int u = (i + 1); u < __str_vec.size(); ++u)
+                for(unsigned long u = (i + 1); u < __str_vec.size(); ++u)
                 {
                     __args__ += __str_vec[u] + " ";
                 }
@@ -527,7 +527,7 @@ int main()
             else if(__str_vec[i] == "pipe")
             {
                 string __args__;
-                for(int u = (i + 1); u < __str_vec.size(); ++u)
+                for(unsigned long u = (i + 1); u < __str_vec.size(); ++u)
                 {
                     __args__ += __str_vec[i];
                 }
@@ -571,10 +571,6 @@ int main()
                     }
 
                     close(pipefd[1]);                               // Close the write end of the pipe
-                    int status;
-
-                    // // Wait for the child process to finish
-                    // waitpid(childPid, &status, 0);               
                 }
             }
         }
