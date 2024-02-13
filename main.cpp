@@ -216,9 +216,11 @@ const char *__get_local_ip__()
     return inet_ntop(AF_INET, &__response.sin_addr, __buffer, INET_ADDRSTRLEN);
 }
 
-char** vectorToArgv(const std::vector<std::string>& vec) {
+char** vectorToArgv(const std::vector<std::string>& vec)
+{
     char** argv = new char*[vec.size() + 1];  // Allocate memory for argv array. +1 for the nullptr terminator.
-    for (size_t i = 0; i < vec.size(); ++i) {
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
         argv[i] = const_cast<char*>(vec[i].c_str());  // Store pointer to string's character data in argv array.
     }
     argv[vec.size()] = nullptr;  // Add nullptr terminator to argv array.

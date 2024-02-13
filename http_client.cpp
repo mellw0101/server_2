@@ -7,6 +7,7 @@
 #include <iostream>
 // #include <istream>
 // #include <sstream>
+#include <netinet/in.h>
 #include <sstream>
 #include <string>
 #include <sys/socket.h>
@@ -347,6 +348,32 @@ string __send_request__(int __socket, const string &__input_string)
     return __response_buffer;
 }
 
+void __assign_and_init__(long *__socket, sockaddr_in *__server, int __port, const char *__server_ip_address)
+{
+    if((*__socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        perror("socket: ");
+        close(*__socket);
+        exit(EXIT_FAILURE);
+    }
+    __server->sin_family = AF_INET;
+    __server->sin_port = htons(__port);
+
+    if(inet_pton(AF_INET, __server_ip_address, &__server->sin_addr) < 0)
+    {
+        perror("inet_pton: ");
+        close(*__socket);
+        exit(EXIT_FAILURE);
+    }
+
+    if(connect(*__socket, (struct sockaddr *)__server, sizeof(*__server)) < 0)
+    {
+        perror("connect: ");
+        close(*__socket);
+        exit(EXIT_FAILURE);
+    }
+}
+
 enum
 {
     BUFFER_SIZE = 10240
@@ -363,29 +390,7 @@ int main()
     string __msg_str__("");
     SimpleReadline srl;
     
-    if((__socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        perror("socket: ");
-        close(__socket);
-        exit(EXIT_FAILURE);
-    }
-    __server.sin_family = AF_INET;
-    __server.sin_port = htons(__port);
-
-    if(inet_pton(AF_INET, __server_ip_address, &__server.sin_addr) < 0)
-    {
-        perror("inet_pton: ");
-        close(__socket);
-        exit(EXIT_FAILURE);
-    }
-
-    if(connect(__socket, (struct sockaddr *)&__server, sizeof(__server)) < 0)
-    {
-        perror("connect: ");
-        close(__socket);
-        exit(EXIT_FAILURE);
-    }
-    
+    __assign_and_init__(&__socket, &__server, __port, __server_ip_address);
     string __prompt = __send_request__(__socket, "_DIR:");
 
     while(true)
