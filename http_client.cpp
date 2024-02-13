@@ -372,9 +372,23 @@ enum
     BUFFER_SIZE = 10240
 };
 
-int main()
+int main(int argc, char *argv[])
 {
-    const char *__server_ip_address("192.168.17.228");
+    if(argc > 2)
+    {
+        return 1;
+    }
+
+    string __server_ip_address;
+    if (argc == 2)
+    {
+        __server_ip_address = argv[1];
+    }
+    else
+    {
+        __server_ip_address = "192.168.17.228";
+    }
+
     long __socket(0);
     uint16_t __port(8001);
     struct sockaddr_in __server;
@@ -396,7 +410,7 @@ int main()
             __server.sin_family = AF_INET;
             __server.sin_port = htons(__port);
 
-            if(inet_pton(AF_INET, __server_ip_address, &__server.sin_addr) < 0)
+            if(inet_pton(AF_INET, __server_ip_address.c_str(), &__server.sin_addr) < 0)
             {
                 perror("inet_pton: ");
                 close(__socket);

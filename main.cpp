@@ -225,9 +225,9 @@ std::string getLocalIPAddress() {
 
     struct sockaddr_in serv{};
     memset(&serv, 0, sizeof(serv));
-    serv.sin_family = AF_INET;
+    serv.sin_family      = AF_INET;
     serv.sin_addr.s_addr = inet_addr("8.8.8.8"); // Google's public DNS server
-    serv.sin_port = htons(80);
+    serv.sin_port        = htons(80);
 
     // Connect to the server
     int err = connect(sockfd, (const struct sockaddr*)&serv, sizeof(serv));
