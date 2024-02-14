@@ -461,17 +461,17 @@ int main()
 
     while(true)
     {
-        if((__sock[1] = accept(__sock[0], (struct sockaddr *)&__address, (socklen_t*)&__address_len)) < 0) // Wait for request.
+        if ((__sock[1] = accept(__sock[0], (struct sockaddr *)&__address, (socklen_t*)&__address_len)) < 0) // Wait for request.
         {
             _fatal_error("Accept failed.");
         }
 
         stringstream __ss;
         char __char = '\0';
-        while(read(__sock[1], &__char, 1) > 0)
+        while (read(__sock[1], &__char, 1) > 0)
         {
             __ss << __char;
-            if(__char == '\0')
+            if (__char == '\0')
             {
                 break;
             }
@@ -480,16 +480,16 @@ int main()
         string __data(__ss.str());
         int start(0);
 
-        for(unsigned long i = 0; i < __data.length(); ++i)
+        for (unsigned long i = 0; i < __data.length(); ++i)
         {
-            if(__data[i] == ' ')
+            if (__data[i] == ' ')
             {
                 string __sub_str(__data.substr(start, i - start));
                 __str_vec.push_back(__sub_str);
                 start = i + 1;
             }
 
-            if(i == __data.length() - 1)
+            if (i == __data.length() - 1)
             {
                 string __sub_str(__data.substr(start, i - start));
                 __str_vec.push_back(__sub_str);
@@ -499,9 +499,9 @@ int main()
         __str_vec = combineArgsBetweenQuotes(__str_vec);
 
         // look for commands.
-        for(unsigned long i = 0; i < __str_vec.size(); ++i)
+        for (unsigned long i = 0; i < __str_vec.size(); ++i)
         {
-            if(__str_vec[i] == "_DIR:")
+            if (__str_vec[i] == "_DIR:")
             {
                 string __msg__= fs::current_path().string();
                 if(send(__sock[1], __msg__.c_str(), __msg__.length() + 1, 0) < 0)
@@ -509,14 +509,14 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-            else if(__str_vec[i] == "SIGTERM")
+            else if (__str_vec[i] == "SIGTERM")
             {
                 console->out("Recived: 'SIGTERM', shuting down now.\n");
                 close(__sock[1]);
                 close(__sock[0]);
                 exit(EXIT_SUCCESS);
             }
-            else if(__str_vec[i] == "server_time")
+            else if (__str_vec[i] == "server_time")
             {
                 string __msg__("Current server time -> " + __time__() + "\n");
                 if(send(__sock[1], __msg__.c_str(), __msg__.length(), 0) < 0)
@@ -524,7 +524,7 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-            else if(__str_vec[i] == "run")
+            else if (__str_vec[i] == "run")
             {
                 std::vector<char*> argv;
                 for(unsigned long h = i + 1; h < __str_vec.size(); ++h)
@@ -552,7 +552,7 @@ int main()
                     exit(EXIT_FAILURE);
                 }
             }
-            else if(__str_vec[i] == "run_backround")
+            else if (__str_vec[i] == "run_backround")
             {
                 string __args__;
                 for(unsigned long u = (i + 1); u < __str_vec.size(); ++u)
@@ -587,7 +587,7 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-            else if(__str_vec[i] == "ls")
+            else if (__str_vec[i] == "ls")
             {
                 string __dir;
                 if(i == __str_vec.size() - 1)
@@ -605,7 +605,7 @@ int main()
                     perror(string(__time__() + "send: ").c_str());
                 }
             }
-            else if(__str_vec[i] == "pipe")
+            else if (__str_vec[i] == "pipe")
             {
                 string __args__;
                 for(unsigned long u = (i + 1); u < __str_vec.size(); ++u)
