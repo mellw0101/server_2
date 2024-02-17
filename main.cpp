@@ -459,7 +459,7 @@ int main()
     console->out('\n', __time__(), " - \033[92mSuccessfully Created Socket\033[0m.\n");
     console->out(__time__(), " - \033[92mServer is listening on: \033[0m", inet_ntoa(__address.sin_addr), ":\033[94m", PORT, "\033[0m\n");
 
-    while(true)
+    while (true)
     {
         if ((__sock[1] = accept(__sock[0], (struct sockaddr *)&__address, (socklen_t*)&__address_len)) < 0) // Wait for request.
         {
@@ -471,12 +471,10 @@ int main()
         while (read(__sock[1], &__char, 1) > 0)
         {
             __ss << __char;
-            if (__char == '\0')
-            {
-                break;
-            }
+            if (__char == '\0') break;
         }
-        vector<string> __str_vec;
+
+        vector<string>(__str_vec);
         string __data(__ss.str());
         int start(0);
 
@@ -526,8 +524,8 @@ int main()
             }
             else if (__str_vec[i] == "run")
             {
-                std::vector<char*> argv;
-                for(unsigned long h = i + 1; h < __str_vec.size(); ++h)
+                vector<char*>(argv);
+                for (unsigned long h = i + 1; h < __str_vec.size(); ++h)
                 {
                     argv.push_back(const_cast<char*>(__str_vec[h].c_str()));
                 }
@@ -535,12 +533,12 @@ int main()
                 argv.push_back(nullptr);
 
                 pid_t pid = fork();
-                if(pid == -1)
+                if (pid == -1)
                 {
                     perror("fork");
                     exit(EXIT_FAILURE);
                 }
-                else if(pid == 0) // Child process
+                else if (pid == 0) // Child process
                 {
                     dup2(__sock[1], STDOUT_FILENO); // Redirect stdout to pipe
                     // dup2(__sock[1], STDIN_FILENO);
@@ -608,24 +606,24 @@ int main()
             else if (__str_vec[i] == "pipe")
             {
                 string __args__;
-                for(unsigned long u = (i + 1); u < __str_vec.size(); ++u)
+                for (unsigned long u = (i + 1); u < __str_vec.size(); ++u)
                 {
                     __args__ += __str_vec[i];
                 }
 
                 int pipefd[2]; // Create a pipe to capture the command's output
-                if(pipe(pipefd) == -1)
+                if (pipe(pipefd) == -1)
                 {
                     perror("pipe");
                 }
 
                 pid_t childPid = fork();
-                if(childPid == -1)
+                if (childPid == -1)
                 {
                     perror("fork");
                     exit(EXIT_FAILURE);
                 }
-                else if(childPid == 0) // Child process.
+                else if (childPid == 0) // Child process.
                 {
                     close(pipefd[0]);
                     dup2(pipefd[1], STDOUT_FILENO);
@@ -660,16 +658,24 @@ int main()
                 {
                     if (i == (__str_vec.size() - 1))
                     {
-                        fs::current_path(string(getenv("HOME")) + "/.server" );
+                        string path(string(getenv("HOME")) + "/.server");
+                        chdir(path.c_str());
                     }
                     else
                     {
-                        fs::current_path(__str_vec[i + 1].c_str());
+                        chdir(__str_vec[i + 1].c_str());
                     }
                 }
-                catch(exception &__e)
+                catch(const exception &__e)
                 {
                     cout << __e.what() << "\n";
+                }
+            }
+            else if (__str_vec[i] == "mining")
+            {
+                while (true)
+                {
+                    
                 }
             }
         }
